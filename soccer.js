@@ -3,20 +3,20 @@ const util = require('util');
 
 const readFile = util.promisify(fs.readFile);
 
-readWeatherFile()
+readSoccerFile()
   .then(getDataRows)
   .then(sortBySmallestSpread)
   .then(sortedDataRows => {
-    const smallestSpread = sortedDataRows[0];
+    const smallestDiff = sortedDataRows[0];
 
-    console.log(smallestSpread.day);
+    console.log(smallestDiff.team);
   })
   .catch(error => {
     console.error(error);
   });
 
-function readWeatherFile () {
-  const filePath = './w_data (5).dat';
+function readSoccerFile () {
+  const filePath = './soccer.dat';
   const readFileOptions = {
     encoding: 'utf-8'
   }
@@ -24,25 +24,25 @@ function readWeatherFile () {
   return readFile(filePath, readFileOptions);
 }
 
-function getDataRows (weatherFile) {
-  const splitLines = weatherFile.split("\n");
+function getDataRows (soccerFile) {
+  const splitLines = soccerFile.split("\n");
 
   const dataRows = [];
 
   splitLines.forEach(parseLine);
 
   function parseLine (line) {
-    const dayMxtMntRegExp = /^ +([\d\*]+)\s+([\d\*]+)\s+([\d\*]+)/;
-    const result = dayMxtMntRegExp.exec(line);
+    const forAgainstRegExp = /\d+\.\s+(\w+).*?(\d+)\s+-\s+(\d+)/;
+    const result = forAgainstRegExp.exec(line);
 
     if (result !== null) {
       const parsedLine = {
-        day: parseInt(result[1], 10),
-        maxT: parseInt(result[2], 10),
-        minT: parseInt(result[3], 10)
+        team: result[1],
+        for: parseInt(result[2], 10),
+        against: parseInt(result[3], 10)
       };
 
-      parsedLine.minMaxDiff = parsedLine.maxT - parsedLine.minT;
+      parsedLine.forAgainstDiff = Math.abs(parsedLine.for - parsedLine.against);
 
       dataRows.push(parsedLine);
     }
@@ -53,6 +53,6 @@ function getDataRows (weatherFile) {
 
 function sortBySmallestSpread (dataRows) {
   return dataRows.sort((firstEl, secondEl) => {
-    return firstEl.minMaxDiff - secondEl.minMaxDiff;
+    return firstEl.forAgainstDiff - secondEl.forAgainstDiff;
   })
 }
